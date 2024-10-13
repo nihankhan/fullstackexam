@@ -1,0 +1,240 @@
+basePath: /api/v1
+definitions:
+  handler.CreateRequest:
+    type: object
+    required:
+      - task
+    properties:
+      task:
+        type: string
+        description: The task description for the todo item.
+        
+  handler.Error:
+    type: object
+    properties:
+      code:
+        type: string
+        description: The error code.
+      message:
+        type: string
+        description: Detailed error message.
+
+  handler.ResponseData:
+    type: object
+    properties:
+      data:
+        description: Response data containing the main information.
+        type: object
+
+  handler.ResponseError:
+    type: object
+    properties:
+      errors:
+        description: List of error details.
+        items:
+          $ref: '#/definitions/handler.Error'
+        type: array
+
+  handler.UpdateRequestBody:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/model.Status'
+        description: The current status of the todo item.
+      task:
+        type: string
+        description: Updated task description.
+
+  model.Status:
+    type: string
+    enum:
+      - created
+      - processing
+      - done
+    x-enum-varnames:
+      - Created
+      - Processing
+      - Done
+
+  model.Todo:
+    type: object
+    properties:
+      createdAt:
+        type: string
+        format: date-time
+        description: The creation timestamp of the todo item.
+      id:
+        type: integer
+        description: Unique identifier for the todo item.
+      status:
+        $ref: '#/definitions/model.Status'
+      task:
+        type: string
+        description: The task description for the todo item.
+      updatedAt:
+        type: string
+        format: date-time
+        description: The last update timestamp of the todo item.
+
+host: localhost:8080
+info:
+  title: fullstack-examination-2024 API
+  version: 0.0.1
+  description: This is a server for fullstack-examination-2024.
+  contact: {}
+
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      tags:
+        - health
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+              - $ref: '#/definitions/handler.ResponseData'
+              - properties:
+                  data:
+                    type: string
+                    example: "Healthy"
+  
+  /todos:
+    get:
+      summary: Retrieve all todos
+      tags:
+        - todos
+      responses:
+        "200":
+          description: Successfully retrieved todos.
+          schema:
+            allOf:
+              - $ref: '#/definitions/handler.ResponseData'
+              - properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/definitions/model.Todo'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+
+    post:
+      summary: Create a new todo
+      tags:
+        - todos
+      consumes:
+        - application/json
+      parameters:
+        - name: request
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/handler.CreateRequest'
+      responses:
+        "201":
+          description: Successfully created a todo.
+          schema:
+            allOf:
+              - $ref: '#/definitions/handler.ResponseData'
+              - properties:
+                  data:
+                    $ref: '#/definitions/model.Todo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+
+  /todos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: integer
+        description: ID of the todo to retrieve or modify.
+
+    get:
+      summary: Retrieve a todo by ID
+      tags:
+        - todos
+      responses:
+        "200":
+          description: Successfully retrieved the todo.
+          schema:
+            allOf:
+              - $ref: '#/definitions/handler.ResponseData'
+              - properties:
+                  data:
+                    $ref: '#/definitions/model.Todo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+        "404":
+          description: Todo not found
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+
+    put:
+      summary: Update a todo by ID
+      tags:
+        - todos
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/handler.UpdateRequestBody'
+      responses:
+        "200":
+          description: Successfully updated the todo.
+          schema:
+            allOf:
+              - $ref: '#/definitions/handler.ResponseData'
+              - properties:
+                  data:
+                    $ref: '#/definitions/model.Todo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+
+    delete:
+      summary: Delete a todo by ID
+      tags:
+        - todos
+      responses:
+        "204":
+          description: No Content - successfully deleted.
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+        "404":
+          description: Todo not found
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResponseError'
+
+schemes:
+  - http
+swagger: "2.0"
